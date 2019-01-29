@@ -366,7 +366,7 @@ public class CameraActivity extends Fragment {
   }
 
 
-PictureCallback jpegPictureCallback = new PictureCallback(){
+ PictureCallback jpegPictureCallback = new PictureCallback(){
     public void onPictureTaken(byte[] data, Camera arg1){
       Log.d(TAG, "CameraPreview jpegPictureCallback");
 
@@ -411,31 +411,22 @@ PictureCallback jpegPictureCallback = new PictureCallback(){
           eventListener.onPictureTaken(path);
         }
         Log.d(TAG, "CameraPreview pictureTakenHandler called back");
-
-      } catch (OutOfMemoryError e)
-
-      {
+      } catch (OutOfMemoryError e) {
         // most likely failed to allocate memory for rotateBitmap
         Log.d(TAG, "CameraPreview OutOfMemoryError");
         // failed to allocate memory
         eventListener.onPictureTakenError("Picture too large (memory)");
-      } catch (IOException e)
-
-      {
+      } catch (IOException e) {
         Log.d(TAG, "CameraPreview IOException");
         eventListener.onPictureTakenError("IO Error when extracting exif");
-      } catch (Exception e)
-
-      {
+      } catch (Exception e) {
         Log.d(TAG, "CameraPreview onPictureTaken general exception");
-      } finally
-
-      {
+      } finally {
         canTakePicture = true;
-        return null;
+        mCamera.startPreview();
       }
     }
-  }
+  };
 
   public void setPictureSize(final int width, final int height) {
 
