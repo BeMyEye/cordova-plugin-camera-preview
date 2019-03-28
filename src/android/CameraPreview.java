@@ -299,7 +299,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
     callbackContext.success(sizes);
   }
 
-  private boolean startCamera(int x, int y, int width, int height, String defaultCamera, Boolean tapToTakePicture,
+  private void startCamera(int x, int y, int width, int height, String defaultCamera, Boolean tapToTakePicture,
       Boolean dragEnabled, final Boolean toBack, String alpha, boolean tapFocus, boolean disableExifHeaderStripping,
       boolean storeToFile, CallbackContext callbackContext) {
     Log.d(TAG, "start camera action");
