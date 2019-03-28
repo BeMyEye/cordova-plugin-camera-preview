@@ -365,9 +365,8 @@ public class CameraActivity extends Fragment {
     return cache.getAbsolutePath();
   }
 
-
- PictureCallback jpegPictureCallback = new PictureCallback(){
-    public void onPictureTaken(byte[] data, Camera arg1){
+  PictureCallback jpegPictureCallback = new PictureCallback() {
+    public void onPictureTaken(byte[] data, Camera arg1) {
       Log.d(TAG, "CameraPreview jpegPictureCallback");
 
       try {
@@ -459,7 +458,7 @@ public class CameraActivity extends Fragment {
            */
           currentQuality = quality;
 
-          if(cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
+          if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
             // The image will be recompressed in the callback
             params.setJpegQuality(99);
           } else {
