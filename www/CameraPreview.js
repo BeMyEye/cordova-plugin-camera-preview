@@ -25,13 +25,14 @@ CameraPreview.startCamera = function (options, onSuccess, onError) {
     options.tapFocus = false;
   }
 
-  options.previewDrag = options.previewDrag || false;
-  options.toBack = options.toBack || false;
-  if (typeof (options.alpha) === 'undefined') {
-    options.alpha = 1;
-  }
-  options.disableExifHeaderStripping = options.disableExifHeaderStripping || false;
-  exec(onSuccess, onError, PLUGIN_NAME, "startCamera", [options.x, options.y, options.width, options.height, options.camera, options.tapPhoto, options.previewDrag, options.toBack, options.alpha, options.tapFocus, options.disableExifHeaderStripping]);
+    options.previewDrag = options.previewDrag || false;
+    options.toBack = options.toBack || false;
+    if (typeof(options.alpha) === 'undefined') {
+        options.alpha = 1;
+    }
+    options.disableExifHeaderStripping = options.disableExifHeaderStripping || false;
+    options.storeToFile = options.storeToFile || false;
+    exec(onSuccess, onError, PLUGIN_NAME, "startCamera", [options.x, options.y, options.width, options.height, options.camera, options.tapPhoto, options.previewDrag, options.toBack, options.alpha, options.tapFocus, options.disableExifHeaderStripping, options.storeToFile]);
 };
 
 CameraPreview.stopCamera = function (onSuccess, onError) {
@@ -133,9 +134,8 @@ CameraPreview.tapToFocus = function (xPoint, yPoint, onSuccess, onError) {
   exec(onSuccess, onError, PLUGIN_NAME, "tapToFocus", [xPoint, yPoint]);
 };
 
-
-CameraPreview.getExposureModes = function (onSuccess, onError) {
-  exec(onSuccess, onError, PLUGIN_NAME, "getExposureModes", []);
+CameraPreview.getExposureModes = function(onSuccess, onError) {
+    exec(onSuccess, onError, PLUGIN_NAME, "getExposureModes", []);
 };
 
 CameraPreview.getExposureMode = function (onSuccess, onError) {
@@ -170,12 +170,36 @@ CameraPreview.setWhiteBalanceMode = function (whiteBalanceMode, onSuccess, onErr
   exec(onSuccess, onError, PLUGIN_NAME, "setWhiteBalanceMode", [whiteBalanceMode]);
 };
 
-CameraPreview.setScreenRotation = function (screenRotation, onSuccess, onError) {
-  exec(onSuccess, onError, PLUGIN_NAME, "setScreenRotation", [screenRotation]);
+CameraPreview.onBackButton = function(onSuccess, onError) {
+    exec(onSuccess, onError, PLUGIN_NAME, "onBackButton");
 };
 
-CameraPreview.onBackButton = function (onSuccess, onError) {
-  exec(onSuccess, onError, PLUGIN_NAME, "onBackButton");
+CameraPreview.getBlob = function(url, onSuccess, onError) {
+    var xhr = new XMLHttpRequest
+    xhr.onload = function() {
+        if (xhr.status != 0 && (xhr.status < 200 || xhr.status >= 300)) {
+            if (isFunction(onError)) {
+                onError('Local request failed');
+            }
+            return;
+        }
+        var blob = new Blob([xhr.response], {type: "image/jpeg"});
+        if (isFunction(onSuccess)) {
+            onSuccess(blob);
+        }
+    };
+    xhr.onerror = function() {
+        if (isFunction(onError)) {
+            onError('Local request failed');
+        }
+    };
+    xhr.open('GET', url);
+    xhr.responseType = 'arraybuffer';
+    xhr.send(null);
+};
+
+CameraPreview.getCameraCharacteristics = function(onSuccess, onError) {
+    exec(onSuccess, onError, PLUGIN_NAME, "getCameraCharacteristics", []);
 };
 
 CameraPreview.FOCUS_MODE = {

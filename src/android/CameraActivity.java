@@ -25,6 +25,8 @@ import android.support.media.ExifInterface;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.Exception;
 import java.lang.Integer;
@@ -74,6 +76,7 @@ public class CameraActivity extends Fragment {
   public boolean dragEnabled;
   public boolean tapToFocus;
   public boolean disableExifHeaderStripping;
+  public boolean storeToFile;
   public boolean toBack;
 
   public void setEventListener(CameraPreviewListener listener) {
@@ -378,22 +381,22 @@ public class CameraActivity extends Fragment {
     return matrix;
   }
 
+  private String getTempDirectoryPath() {
+    File cache = null;
+
+    // Use internal storage
+    cache = getActivity().getCacheDir();
+
+    // Create the cache directory if it doesn't exist
+    cache.mkdirs();
+    return cache.getAbsolutePath();
+  }
+
   PictureCallback jpegPictureCallback = new PictureCallback() {
-
     public void onPictureTaken(byte[] data, Camera arg1) {
-      new RotateImageIfNecessary().execute(data);
-      mCamera.startPreview();
-    }
-  };
-
-  class RotateImageIfNecessary extends AsyncTask<byte[], String, String> {
-    @Override
-    protected String doInBackground(byte[][] params) {
-
-      byte[] data = params[0];
+      Log.d(TAG, "CameraPreview jpegPictureCallback");
 
       try {
-
         if (!disableExifHeaderStripping) {
 
           ExifInterface exifInterface = new ExifInterface(new ByteArrayInputStream(data));
@@ -413,35 +416,34 @@ public class CameraActivity extends Fragment {
           }
         }
 
-        String encodedImage = Base64.encodeToString(data, Base64.NO_WRAP);
+        if (!storeToFile) {
+          String encodedImage = Base64.encodeToString(data, Base64.NO_WRAP);
 
-        eventListener.onPictureTaken(encodedImage);
+          eventListener.onPictureTaken(encodedImage);
+        } else {
+          String path = getTempDirectoryPath() + "/capture.jpg";
+          FileOutputStream out = new FileOutputStream(path);
+          out.write(data);
+          out.close();
+          eventListener.onPictureTaken(path);
+        }
         Log.d(TAG, "CameraPreview pictureTakenHandler called back");
-
-      } catch (OutOfMemoryError e)
-
-      {
+      } catch (OutOfMemoryError e) {
         // most likely failed to allocate memory for rotateBitmap
         Log.d(TAG, "CameraPreview OutOfMemoryError");
         // failed to allocate memory
         eventListener.onPictureTakenError("Picture too large (memory)");
-      } catch (IOException e)
-
-      {
+      } catch (IOException e) {
         Log.d(TAG, "CameraPreview IOException");
         eventListener.onPictureTakenError("IO Error when extracting exif");
-      } catch (Exception e)
-
-      {
+      } catch (Exception e) {
         Log.d(TAG, "CameraPreview onPictureTaken general exception");
-      } finally
-
-      {
+      } finally {
         canTakePicture = true;
-        return null;
+        mCamera.startPreview();
       }
     }
-  }
+  };
 
   public void setPictureSize(final int width, final int height) {
 
@@ -474,7 +476,7 @@ public class CameraActivity extends Fragment {
            */
           currentQuality = quality;
 
-          if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+          if (cameraCurrentlyLocked == Camera.CameraInfo.CAMERA_FACING_FRONT && !storeToFile) {
             // The image will be recompressed in the callback
             params.setJpegQuality(99);
           } else {
