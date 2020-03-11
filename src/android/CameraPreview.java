@@ -327,7 +327,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
           ViewParent rootParent = containerView.getParent();
           ViewParent curParent = view.getParent();
 
-          view.setBackgroundColor(0x00000000);
+          view.setBackgroundColor(0x1A96B0);
           // If parents do not match look for.
           if(curParent.getParent() != rootParent) {
             while(curParent != null && curParent.getParent() != rootParent) {
@@ -335,7 +335,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
             }
 
             if(curParent != null) {
-              ((ViewGroup)curParent).setBackgroundColor(0x00000000);
+              ((ViewGroup)curParent).setBackgroundColor(0x1A96B0);
               ((ViewGroup)curParent).bringToFront();
             } else {
               // Do default...
