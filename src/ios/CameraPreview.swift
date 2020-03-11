@@ -95,6 +95,7 @@ class CameraPreview: CDVPlugin, TakePictureDelegate, FocusDelegate {
                 if let session = self.sessionManager?.session {
                     let previewLayer = AVCaptureVideoPreviewLayer(session: session)
                     previewLayer.frame = self.cameraRenderController.view.frame
+                    previewLayer.backgroundColor = UIColor(red: 26/255, green: 150/255, blue: 176/255, alpha: 1.0).cgColor // #1A96B0 blue
                     self.cameraRenderController.view.layer.addSublayer(previewLayer)
                 }
                 
