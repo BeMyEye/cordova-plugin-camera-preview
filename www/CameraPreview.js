@@ -123,7 +123,11 @@ CameraPreview.setPictureSize = function (dimensions, onSuccess, onError) {
   exec(onSuccess, onError, PLUGIN_NAME, "setPictureSize", [dimensions.width, dimensions.height]);
 };
 
-CameraPreview.getSupportedPictureSizes = function (onSuccess, onError) {
+CameraPreview.setPreviewArea = function(dimensions, onSuccess, onError) {
+  exec(onSuccess, onError, PLUGIN_NAME, "setPreviewArea", [dimensions.width, dimensions.height, dimensions.x, dimensions.y]);
+};
+
+CameraPreview.getSupportedPictureSizes = function(onSuccess, onError) {
   exec(onSuccess, onError, PLUGIN_NAME, "getSupportedPictureSizes", []);
 };
 
