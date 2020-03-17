@@ -611,40 +611,6 @@ class CameraPreview: CDVPlugin, TakePictureDelegate, FocusDelegate {
         commandDelegate.send(pluginResult, callbackId: command.callbackId)
     }
     
-    @objc func setPreviewArea(_ command: CDVInvokedUrlCommand) {
-        print("--> setPreviewArea")
-        guard sessionManager != nil else {
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Session not started")
-            commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            return
-        }
-        
-        guard command.arguments.count > 1  else {
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Invalid number of parameters")
-            commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            return
-        }
-        
-        let width = command.arguments[0] as? CGFloat ?? 0.0
-        let height = command.arguments[1] as? CGFloat ?? 0.0
-        let x = command.arguments[2] as? CGFloat ?? 0.0
-        let y = command.arguments[3] as? CGFloat ?? 0.0
-        
-        self.sessionManager?.session?.stopRunning()
-        // Add video preview layer
-        if let session = self.sessionManager?.session {
-            let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-            previewLayer.frame = CGRect(x: x, y: y, width: width, height: height)
-            let oldLayer = self.cameraRenderController.view.layer.sublayers?[0]
-            self.cameraRenderController.view.layer.replaceSublayer(oldLayer!, with: previewLayer)
-            self.cameraRenderController.view.setNeedsDisplay()
-            self.sessionManager?.session?.startRunning()
-        }
-
-        let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
-        commandDelegate.send(pluginResult, callbackId: command.callbackId)
-    }
-    
     @objc func getSupportedPictureSizes(_ command: CDVInvokedUrlCommand) {
         print("--> getSupportedPictureSizes")
         guard sessionManager != nil else {
