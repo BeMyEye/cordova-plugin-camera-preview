@@ -588,14 +588,17 @@ public class CameraActivity extends Fragment {
   }
 
   public void setPictureSize(final int width, final int height) {
-
     Parameters params = mCamera.getParameters();
     params.setPictureSize(width, height);
     setCameraParameters(params);
     Log.d(TAG, "setPictureSize " + width + ", " + height);
     setPreviewSizeFromCameraPictureSize();
-
   }
+  
+  public void setPreviewArea(final int width, final int height, final int x, final int y) {
+    Log.d(TAG, "setPreviewArea " + width + ", " + height + ", " + x + ", " + y);
+  }
+
   static byte[] rotateNV21(final byte[] yuv,
                            final int width,
                            final int height,
