@@ -16,7 +16,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.widget.FrameLayout;
-import android.widget.RelativeLayout;
 import org.apache.cordova.LOG;
 
 import java.io.ByteArrayOutputStream;
@@ -132,7 +131,7 @@ class Preview extends ViewGroup implements SurfaceHolder.Callback {
     final int height = resolveSize(getSuggestedMinimumHeight(), heightMeasureSpec);
 
     Log.d(TAG, "onMeasure width: "+width+" height: "+height);
-    RelativeLayout parent = (RelativeLayout) getParent();
+    FrameLayout parent = (FrameLayout) getParent();
 
     final int parentWidth = parent.getWidth();
     final int parentHeight = parent.getHeight();
