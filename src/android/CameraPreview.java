@@ -302,7 +302,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
       public void run() {
 
         // The layout is only created on first call, and next times we reuse it
-        FrameLayout containerView = (FrameLayout) cordova.getActivity().findViewById(containerViewId);
+        FrameLayout containerView = cordova.getActivity().findViewById(containerViewId);
         if (containerView == null) {
           containerView = new FrameLayout(cordova.getActivity().getApplicationContext());
           containerView.setId(containerViewId);
