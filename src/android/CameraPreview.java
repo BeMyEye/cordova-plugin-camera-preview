@@ -49,7 +49,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
   private static final String START_CAMERA_ACTION = "startCamera";
   private static final String STOP_CAMERA_ACTION = "stopCamera";
   private static final String PICTURE_SIZE_ACTION = "setPictureSize";
-  private static final String PREVIEW_AREA_ACTION = "setPreviewArea";
   private static final String SWITCH_CAMERA_ACTION = "switchCamera";
   private static final String TAKE_PICTURE_ACTION = "takePicture";
   private static final String TAKE_SNAPSHOT_ACTION = "takeSnapshot";
@@ -126,8 +125,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
       return getMaxZoom(callbackContext);
     } else if (PICTURE_SIZE_ACTION.equals(action)) {
       return setPictureSize(args.getInt(0), args.getInt(1), callbackContext);
-    } else if (PREVIEW_AREA_ACTION.equals(action)) {
-      return setPreviewArea(args.getInt(0), args.getInt(1), args.getInt(2), args.getInt(3), callbackContext);
     } else if (SUPPORTED_FLASH_MODES_ACTION.equals(action)) {
       return getSupportedFlashModes(callbackContext);
     } else if (GET_FLASH_MODE_ACTION.equals(action)) {
@@ -309,7 +306,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
         if (containerView == null) {
           containerView = new FrameLayout(cordova.getActivity().getApplicationContext());
           containerView.setId(containerViewId);
-          
+
           FrameLayout.LayoutParams containerLayoutParams = new FrameLayout.LayoutParams(computedWidth, computedHeight);
           containerLayoutParams.setMargins(computedX, computedY, 0, 0);
           containerView.setLayoutParams(containerLayoutParams);
@@ -321,7 +318,7 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
           webViewParentGroup.addView(containerView, containerLayoutParams);
         }
 
-        containerView.setBackgroundColor(Color.BLACK);
+        containerView.setBackgroundColor(Color.parseColor("#1A96B0")); // blue
 
         // display camera bellow the webview
         if (toBack) {
@@ -821,16 +818,6 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
     Log.d(TAG, "setPictureSize: " + width + " " + height);
 
     fragment.setPictureSize(width, height);
-    callbackContext.success();
-    return true;
-  }
-
-  private boolean setPreviewArea(int width, int height, int x, int y, CallbackContext callbackContext) {
-    if (!this.hasCamera(callbackContext)) {
-      return true;
-    }
-    Log.d(TAG, "setPreviewArea: " + width + " " + height + " " + x + " " + y);
-
     callbackContext.success();
     return true;
   }
