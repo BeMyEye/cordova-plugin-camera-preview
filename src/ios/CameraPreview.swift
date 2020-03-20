@@ -94,7 +94,7 @@ class CameraPreview: CDVPlugin, TakePictureDelegate, FocusDelegate {
                 // Add video preview layer
                 if let session = self.sessionManager?.session {
                     let previewLayer = AVCaptureVideoPreviewLayer(session: session)
-                    previewLayer.frame = self.cameraRenderController.view.frame
+                    previewLayer.frame = CGRect(x: 0, y: 0, width: width, height: height)
                     self.cameraRenderController.view.layer.addSublayer(previewLayer)
                 }
                 
