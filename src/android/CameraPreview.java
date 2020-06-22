@@ -969,13 +969,13 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
     fragment = null;
 
     // Hide the layout because it is not destroyed
-	cordova.getActivity().runOnUiThread(new Runnable() {
-		@Override
-		public void run() {
-			FrameLayout containerView = cordova.getActivity().findViewById(containerViewId);
-			containerView.setBackgroundColor(Color.TRANSPARENT);
-		}
-	});
+	  cordova.getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        FrameLayout containerView = cordova.getActivity().findViewById(containerViewId);
+        containerView.setBackgroundColor(Color.TRANSPARENT);
+      }
+	  });
 
     callbackContext.success();
     return true;
