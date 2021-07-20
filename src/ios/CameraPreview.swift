@@ -133,37 +133,36 @@ class CameraPreview: CDVPlugin, TakePictureDelegate, FocusDelegate {
             cameraRenderController.removeFromParentViewController()
             cameraRenderController = nil
         }
-
         
-        guard self.sessionManager != nil else {
-            print("--> Camera not started")
-            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Camera not started")
-            self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
-            return
-        }
-        
-        if let inputs = self.sessionManager.session?.inputs as? [AVCaptureInput] {
-            for input in inputs {
-                self.sessionManager.session?.removeInput(input)
+        commandDelegate.run(inBackground: {() -> Void in
+            guard self.sessionManager != nil else {
+                print("--> Camera not started")
+                let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Camera not started")
+                self.commandDelegate.send(pluginResult, callbackId: command.callbackId)
+                return
             }
-        }
-        
-        
-        if let outputs = self.sessionManager.session?.outputs as? [AVCaptureOutput] {
-            for output in outputs {
-                self.sessionManager.session?.removeOutput(output)
+            
+            if let inputs = self.sessionManager.session?.inputs as? [AVCaptureInput] {
+                for input in inputs {
+                    self.sessionManager.session?.removeInput(input)
+                }
             }
-        }
-        
-        self.sessionManager.session?.stopRunning()
-        
-        if self.sessionManager != nil {
-            self.sessionManager.delegate = nil;
-            self.sessionManager = nil;
-        }
-        
-        print("--> camera stopped")
-        self.commandDelegate.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+            
+            
+            if let outputs = self.sessionManager.session?.outputs as? [AVCaptureOutput] {
+                for output in outputs {
+                    self.sessionManager.session?.removeOutput(output)
+                }
+            }
+            
+            if self.sessionManager != nil {
+                self.sessionManager.delegate = nil;
+                self.sessionManager = nil;
+            }
+            
+            print("--> camera stopped")
+            self.commandDelegate.send(CDVPluginResult(status: CDVCommandStatus_OK), callbackId: command.callbackId)
+        })
     }
     
     @objc func hideCamera(_ command: CDVInvokedUrlCommand) {
