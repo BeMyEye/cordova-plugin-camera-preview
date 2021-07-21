@@ -15,7 +15,7 @@ class CameraPreview: CDVPlugin, TakePictureDelegate, FocusDelegate {
     var withExifInfos = false
     var captureVideoOrientation: AVCaptureVideoOrientation?
     let dateFormatterForPhotoExif: DateFormatter = DateFormatter()
-    var startCameraInProgress = false;
+    var startCameraInProgress = false
     
     override func pluginInitialize() {
         // start as transparent
