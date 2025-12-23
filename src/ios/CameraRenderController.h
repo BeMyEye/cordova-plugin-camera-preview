@@ -32,7 +32,6 @@
 @property BOOL dragEnabled;
 @property BOOL tapToTakePicture;
 @property BOOL tapToFocus;
-@property BOOL disableExifHeaderStripping;
 @property (nonatomic, assign) id delegate;
 
 @end

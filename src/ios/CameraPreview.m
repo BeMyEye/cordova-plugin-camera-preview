@@ -17,7 +17,6 @@
 - (void) startCamera:(CDVInvokedUrlCommand*)command {
 
   CDVPluginResult *pluginResult;
-  self.startCameraInProgress = true;
 
   if (self.sessionManager != nil) {
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera already started!"];
@@ -35,10 +34,9 @@
     BOOL dragEnabled = (BOOL)[command.arguments[6] boolValue];
     BOOL toBack = (BOOL)[command.arguments[7] boolValue];
     CGFloat alpha = (CGFloat)[command.arguments[8] floatValue];
-    BOOL tapToFocus = (BOOL)[command.arguments[9] boolValue];
-    BOOL disableExifHeaderStripping = (BOOL)[command.arguments[10] boolValue]; // ignore Android only
-    self.storeToFile = (BOOL)[command.arguments[11] boolValue];
-    self.storageDirectory = command.arguments[12];
+    BOOL tapToFocus = (BOOL) [command.arguments[9] boolValue];
+    BOOL disableExifHeaderStripping = (BOOL) [command.arguments[10] boolValue]; // ignore Android only
+    self.storeToFile = (BOOL) [command.arguments[11] boolValue];
 
     // Create the session manager
     self.sessionManager = [[CameraSessionManager alloc] init];
@@ -48,7 +46,6 @@
     self.cameraRenderController.dragEnabled = dragEnabled;
     self.cameraRenderController.tapToTakePicture = tapToTakePicture;
     self.cameraRenderController.tapToFocus = tapToFocus;
-    self.cameraRenderController.disableExifHeaderStripping = disableExifHeaderStripping;
     self.cameraRenderController.sessionManager = self.sessionManager;
     self.cameraRenderController.view.frame = CGRectMake(x, y, width, height);
     self.cameraRenderController.delegate = self;
@@ -62,7 +59,10 @@
       self.webView.opaque = NO;
       self.webView.backgroundColor = [UIColor clearColor];
 
-      [self.webView.superview addSubview:self.cameraRenderController.view];
+      self.webView.scrollView.opaque = NO;
+      self.webView.scrollView.backgroundColor = [UIColor clearColor];
+
+      [self.viewController.view insertSubview:self.cameraRenderController.view atIndex:0];
       [self.webView.superview bringSubviewToFront:self.webView];
     } else {
       self.cameraRenderController.view.alpha = alpha;
@@ -73,8 +73,7 @@
     self.sessionManager.delegate = self.cameraRenderController;
 
     [self.sessionManager setupSession:defaultCamera completion:^(BOOL started) {
-        
-        self.startCameraInProgress = false;
+
       [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
     }];
@@ -95,12 +94,6 @@
 
         self.cameraRenderController = nil;
         self.sessionManager = nil;
-        
-        if(self.startCameraInProgress == false) {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"startCamera in progress"];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-            return;
-        }
 
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     }
@@ -462,38 +455,7 @@
     CGFloat width = (CGFloat)[command.arguments[0] floatValue];
     CGFloat height = (CGFloat)[command.arguments[1] floatValue];
     CGFloat quality = (CGFloat)[command.arguments[2] floatValue] / 100.0f;
-    CGFloat latitude = (CGFloat)[command.arguments[3] floatValue];
-    CGFloat longitude = (CGFloat)[command.arguments[4] floatValue];
-    CGFloat altitude = (CGFloat)[command.arguments[5] floatValue];
-    NSTimeInterval timestamp = [command.arguments[6] doubleValue];
-    CGFloat trueHeading = (CGFloat)[command.arguments[7] floatValue];
-    CGFloat magneticHeading = (CGFloat)[command.arguments[8] floatValue];
-    NSString *software = command.arguments[9];
-      
-    self.exifInfos = [NSMutableDictionary new];
-      
-    if(latitude){
-      self.exifInfos[@"latitude"] = [NSNumber numberWithDouble:latitude];
-    }
-    if(longitude){
-      self.exifInfos[@"longitude"] = [NSNumber numberWithDouble:longitude];
-    }
-    if(altitude){
-      self.exifInfos[@"altitude"] = [NSNumber numberWithDouble:altitude];
-    }
-    if(timestamp){
-      self.exifInfos[@"timestamp"] = [NSNumber numberWithDouble:timestamp];
-    }
-    if(trueHeading){
-      self.exifInfos[@"trueHeading"] = [NSNumber numberWithDouble:trueHeading];
-    }
-    if(magneticHeading){
-      self.exifInfos[@"magneticHeading"] = [NSNumber numberWithDouble:magneticHeading];
-    }
-    if(software){
-      self.exifInfos[@"software"] = software;
-    }
-      
+
     [self invokeTakePicture:width withHeight:height withQuality:quality];
   } else {
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera not started"];
@@ -794,53 +756,7 @@
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageAsString:[err localizedDescription]];
           }
           else {
-            CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)imageData, NULL);
-            if(imageSource) {
-                NSMutableDictionary *metadata = [NSMutableDictionary dictionaryWithDictionary:(__bridge NSDictionary *)CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL)];
-                NSLog(@"exif data 2 = %@", metadata[(__bridge NSString *)kCGImagePropertyExifDictionary]);
-                [self writeExifInfosToMetadata:metadata];
-                
-                metadata[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @(quality);
-
-                NSString *type = @"public.jpeg";
-                NSMutableData *data = [NSMutableData data];
-                CGImageDestinationRef dest = CGImageDestinationCreateWithData((__bridge CFMutableDataRef)data, (__bridge CFStringRef)type, 1, NULL);
-
-                CGImageRef cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, NULL);
-                CGImageDestinationAddImage(dest, cgImage, (__bridge CFDictionaryRef)metadata);
-                CGImageDestinationFinalize(dest);
-
-                NSError *error;
-                NSURL *fileUrl;
-                
-                if(self.storageDirectory.length > 0){
-                    NSString *filePath = [NSString stringWithFormat:@"%@%@", self.storageDirectory, [self getFileName:@"jpg"]];
-                    fileUrl = [NSURL URLWithString:filePath];
-                } else {
-                    fileUrl = [self getFileUrl:@"jpg"];
-                }
-
-                // Write the file at path
-                if (![data writeToURL:fileUrl options:NSDataWritingAtomic error:&error]) {
-                    NSLog(@"We have an error to save the picture: %@", error);
-                } else {
-                    NSMutableDictionary *resultMedia = [NSMutableDictionary dictionary];
-
-                    resultMedia[@"filePath"] = fileUrl.absoluteString;
-                    resultMedia[@"width"] = @(CGImageGetWidth(cgImage));
-                    resultMedia[@"height"] = @(CGImageGetHeight(cgImage));
-                    resultMedia[@"orientation"] = metadata[(__bridge NSString *)kCGImagePropertyOrientation];
-
-                    CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultMedia];
-                    // This means that the callback on JS side is kept for further calls from native side to JS side
-                    [pluginResult setKeepCallbackAsBool:YES];
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
-                }
-                
-                CGImageRelease(cgImage);
-                CFRelease(dest);
-                CFRelease(imageSource);
-            }
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[NSURL fileURLWithPath:filePath] absoluteString]];
           }
         } else {
           NSMutableArray *params = [[NSMutableArray alloc] init];
@@ -855,62 +771,6 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:self.onPictureTakenHandlerId];
       }
     }];
-}
-
-- (void)writeExifInfosToMetadata:(NSMutableDictionary *)metadata {
-    NSMutableDictionary *tiff = (NSMutableDictionary *)metadata[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
-    tiff[(__bridge NSString *)kCGImagePropertyTIFFSoftware] = self.exifInfos[@"software"];
-    
-    NSMutableDictionary *gps = [NSMutableDictionary dictionary];
-    metadata[(__bridge NSString *)kCGImagePropertyGPSDictionary] = gps;
-    
-    // Calculate north/south and east/west because we can't set negative latitude and longitude
-    NSString *latitudeRef;
-    NSString *longitudeRef;
-    
-    double latitude = [self.exifInfos[@"latitude"] doubleValue];
-    double longitude = [self.exifInfos[@"longitude"] doubleValue];
-    
-    if (latitude < 0.0) {
-        latitudeRef = @"S";
-        self.exifInfos[@"latitude"] = @(fabs(latitude));
-    } else {
-        latitudeRef = @"N";
-    }
-    
-    if (longitude < 0.0) {
-        longitudeRef = @"W";
-        self.exifInfos[@"longitude"] = @(fabs(longitude));
-    } else {
-        longitudeRef = @"E";
-    }
-    
-    NSNumber *trueHeading = self.exifInfos[@"trueHeading"];
-    NSNumber *magneticHeading = self.exifInfos[@"magneticHeading"];
-    
-    if (trueHeading != nil || magneticHeading != nil) {
-        if (trueHeading == nil || [trueHeading doubleValue] < 0.0) {
-            gps[(__bridge NSString *)kCGImagePropertyGPSImgDirection] = @[magneticHeading, @(1)];
-            gps[(__bridge NSString *)kCGImagePropertyGPSImgDirectionRef] = @"M";
-        } else {
-            gps[(__bridge NSString *)kCGImagePropertyGPSImgDirection] = @[trueHeading, @(1)];
-            gps[(__bridge NSString *)kCGImagePropertyGPSImgDirectionRef] = @"T";
-        }
-    }
-    
-    gps[(__bridge NSString *)kCGImagePropertyGPSLatitudeRef] = latitudeRef;
-    gps[(__bridge NSString *)kCGImagePropertyGPSLongitudeRef] = longitudeRef;
-    gps[(__bridge NSString *)kCGImagePropertyGPSLatitude] = self.exifInfos[@"latitude"];
-    gps[(__bridge NSString *)kCGImagePropertyGPSLongitude] = self.exifInfos[@"longitude"];
-    
-    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    dateFormatter.dateFormat = @"HH:mm:ss";
-    gps[(__bridge NSString *)kCGImagePropertyGPSTimeStamp] = [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:[self.exifInfos[@"timestamp"] doubleValue]]];
-    dateFormatter.dateFormat = @"yyyy:MM:dd";
-    gps[(__bridge NSString *)kCGImagePropertyGPSDateStamp] = [dateFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:[self.exifInfos[@"timestamp"] doubleValue]]];
-    
-    // Clear EXIF after usage
-    self.exifInfos = [NSDictionary dictionary];
 }
 
 - (NSString*)getTempDirectoryPath
@@ -932,26 +792,6 @@
     } while ([fileMgr fileExistsAtPath:filePath]);
 
     return filePath;
-}
-
-- (NSURL *)getTempDirectoryUrl {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSURL *documentsDirectory = [paths objectAtIndex:0];
-    NSURL *tempDirectoryUrl = [documentsDirectory URLByAppendingPathComponent:@"NoCloud"];
-    return tempDirectoryUrl;
-}
-
-- (NSURL *)getFileUrl:(NSString *)extension {
-    NSString *fileName = [self getFileName:extension];
-    NSURL *tempDirectoryUrl = [self getTempDirectoryUrl];
-    NSURL *fileUrl = [tempDirectoryUrl URLByAppendingPathComponent:fileName];
-    return fileUrl;
-}
-
-- (NSString *)getFileName:(NSString *)extension {
-    NSString *extensionString = extension ?: @"";
-    NSString *fileName = [NSString stringWithFormat:@"%@%04d.%@", TMP_IMAGE_PREFIX, arc4random_uniform(1000000), extensionString];
-    return fileName;
 }
 
 @end

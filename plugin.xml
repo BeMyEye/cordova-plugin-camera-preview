@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<plugin id="cordova-plugin-camera-preview" version="0.12.3" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+<plugin id="cordova-plugin-camera-preview" version="0.14.0" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
 
    <name>cordova-plugin-camera-preview</name>
   <description>Cordova plugin that allows camera interaction from HTML code. Show camera preview popup on top of the HTML.</description>
@@ -19,9 +19,11 @@
     <source-file src="src/android/CustomSurfaceView.java" target-dir="src/com/cordovaplugincamerapreview" />
     <source-file src="src/android/Preview.java" target-dir="src/com/cordovaplugincamerapreview" />
     <source-file src="src/android/TapGestureDetector.java" target-dir="src/com/cordovaplugincamerapreview" />
+    <source-file src="src/android/camera_activity.xml" target-dir="res/layout" />
+    <source-file src="src/android/camera_theme.xml" target-dir="res/values" />
+    <source-file src="src/android/camera_ids.xml" target-dir="res/values" />
 
-<preference name="ANDROID_SUPPORT_LIBRARY_VERSION" default="26+"/>
-    <framework src="androidx.exifinterface:exifinterface:$ANDROID_SUPPORT_LIBRARY_VERSION" />
+    <framework src="androidx.exifinterface:exifinterface:1.2.0" />
 
     <config-file target="res/xml/config.xml" parent="/*">
       <feature name="CameraPreview">
@@ -32,7 +34,7 @@
 
     <config-file target="AndroidManifest.xml" parent="/manifest">
       <uses-feature android:name="android.hardware.camera" android:required="true"/>
-      <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+      <uses-feature android:name="android.hardware.camera.autofocus" android:required="true"/>
       <uses-permission android:name="android.permission.CAMERA" />
       <uses-permission android:name="android.permission.RECORD_AUDIO" />
       <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -50,11 +52,17 @@
       </feature>
     </config-file>
 
-    <dependency id="cordova-plugin-add-swift-support" version="2.0.2"/>
-    <source-file src="src/ios/CameraPreview.swift" />
-    <source-file src="src/ios/TemperatureAndTint.swift" />
-    <source-file src="src/ios/CameraSessionManager.swift" />
-    <source-file src="src/ios/CameraRenderController.swift" />
+    <header-file src="src/ios/CameraPreview.h" />
+    <source-file src="src/ios/CameraPreview.m" />
+
+     <header-file src="src/ios/TemperatureAndTint.h" />
+    <source-file src="src/ios/TemperatureAndTint.m" />
+
+    <header-file src="src/ios/CameraSessionManager.h" />
+    <source-file src="src/ios/CameraSessionManager.m" />
+
+    <header-file src="src/ios/CameraRenderController.h" />
+    <source-file src="src/ios/CameraRenderController.m" />
 
     <framework src="ImageIO.framework" weak="true" />
     <framework src="MobileCoreServices.framework" />

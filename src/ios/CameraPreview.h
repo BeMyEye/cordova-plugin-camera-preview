@@ -37,7 +37,6 @@
 - (void) getSupportedWhiteBalanceModes:(CDVInvokedUrlCommand*)command;
 - (void) getWhiteBalanceMode:(CDVInvokedUrlCommand*)command;
 - (void) setWhiteBalanceMode:(CDVInvokedUrlCommand*)command;
-- (void) setExifInfos:(NSMutableDictionary*)command;
 
 - (void) invokeTakePicture:(CGFloat) width withHeight:(CGFloat) height withQuality:(CGFloat) quality;
 - (void) invokeTakePicture;
@@ -48,9 +47,5 @@
 @property (nonatomic) CameraRenderController *cameraRenderController;
 @property (nonatomic) NSString *onPictureTakenHandlerId;
 @property (nonatomic) BOOL storeToFile;
-@property (nonatomic) BOOL withExifInfos;
-@property (nonatomic) BOOL startCameraInProgress;
-@property (nonatomic) NSMutableDictionary *exifInfos;
-@property (nonatomic) NSString *storageDirectory;
 
 @end

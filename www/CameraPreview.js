@@ -4,7 +4,7 @@ var argscheck = require('cordova/argscheck'),
 
 var PLUGIN_NAME = "CameraPreview";
 
-var CameraPreview = function () {};
+var CameraPreview = function() {};
 
 function isFunction(obj) {
   return !!(obj && obj.constructor && obj.call && obj.apply);
@@ -45,7 +45,9 @@ CameraPreview.startCamera = function(options, onSuccess, onError) {
   options.disableExifHeaderStripping = options.disableExifHeaderStripping || false;
 
   options.storeToFile = options.storeToFile || false;
+
   options.storageDirectory = options.storageDirectory || null;
+
   exec(onSuccess, onError, PLUGIN_NAME, "startCamera", [
     options.x,
     options.y,
@@ -127,7 +129,18 @@ CameraPreview.takePicture = function(opts, onSuccess, onError) {
   var magneticHeading = opts.compassHeading ? opts.compassHeading.magneticHeading : null;
   var software = opts.software ? opts.software : 'BeMyCam';
 
-  exec(onSuccess, onError, PLUGIN_NAME, "takePicture", [opts.width, opts.height, opts.quality, coords.latitude, coords.longitude, coords.altitude, timestamp, trueHeading, magneticHeading, software]);
+  exec(onSuccess, onError, PLUGIN_NAME, "takePicture", [
+    opts.width,
+    opts.height,
+    opts.quality,
+    coords.latitude,
+    coords.longitude,
+    coords.altitude,
+    timestamp,
+    trueHeading,
+    magneticHeading,
+    software
+  ]);
 };
 
 CameraPreview.setColorEffect = function(effect, onSuccess, onError) {
@@ -235,10 +248,6 @@ CameraPreview.getCameraCharacteristics = function(onSuccess, onError) {
 };
 
 CameraPreview.onBackButton = function(onSuccess, onError) {
-  exec(onSuccess, onError, PLUGIN_NAME, "onBackButton");
-};
-
-CameraPreview.onBackButton = function (onSuccess, onError) {
   exec(onSuccess, onError, PLUGIN_NAME, "onBackButton");
 };
 

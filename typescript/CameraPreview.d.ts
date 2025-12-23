@@ -22,6 +22,7 @@ declare module 'cordova-plugin-camera-preview' {
     y?: number;
     disableExifHeaderStripping?: boolean;
     storeToFile?: boolean;
+    storageDirectory?: string;
   }
 
   interface CameraPreviewTakePictureOptions {
@@ -76,6 +77,5 @@ declare module 'cordova-plugin-camera-preview' {
     onBackButton(onSuccess?: CameraPreviewSuccessHandler, onError?: CameraPreviewErrorHandler): void;
     getBlob(path: string, onSuccess?: CameraPreviewSuccessHandler, onError?: CameraPreviewErrorHandler): void;
     getCameraCharacteristics(onSuccess?: CameraPreviewSuccessHandler, onError?: CameraPreviewErrorHandler): void;
-    setExifInfos(position: Geoposition, software: string, compassHeading?: DeviceOrientationCompassHeading, onSuccess?: CameraPreviewSuccessHandler, onError?: CameraPreviewErrorHandler): void;
   }
 }
