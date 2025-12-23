@@ -94,6 +94,7 @@ All options stated are optional and will default to values here
 * `previewDrag` - Defaults to false - Does not work if toBack is set to false
 * `storeToFile` - Defaults to false - Capture images to a file and return back the file path instead of returning base64 encoded data.
 * `disableExifHeaderStripping` - Defaults to false - **Android Only** - Disable automatic rotation of the image, and let the browser deal with it (keep reading on how to achieve it)
+* `storageDirectory` - Defaults to null - Set the path where you want the images to be stored
 
 ```javascript
 let options = {
@@ -107,7 +108,8 @@ let options = {
   tapFocus: false,
   previewDrag: false,
   storeToFile: false,
-  disableExifHeaderStripping: false
+  disableExifHeaderStripping: false,
+  storageDirectory: ''
 };
 
 CameraPreview.startCamera(options);
