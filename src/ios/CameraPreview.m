@@ -37,6 +37,7 @@
     BOOL tapToFocus = (BOOL) [command.arguments[9] boolValue];
     BOOL disableExifHeaderStripping = (BOOL) [command.arguments[10] boolValue]; // ignore Android only
     self.storeToFile = (BOOL) [command.arguments[11] boolValue];
+    self.storageDirectory = [command.arguments[12] description];
 
     // Create the session manager
     self.sessionManager = [[CameraSessionManager alloc] init];
@@ -775,8 +776,10 @@
 
 - (NSString*)getTempDirectoryPath
 {
-  NSString* tmpPath = [NSTemporaryDirectory()stringByStandardizingPath];
-  return tmpPath;
+  if (self.storageDirectory == NULL) {
+    return [NSTemporaryDirectory()stringByStandardizingPath];
+  }
+  return [self.storageDirectory stringByStandardizingPath];
 }
 
 - (NSString*)getTempFilePath:(NSString*)extension
