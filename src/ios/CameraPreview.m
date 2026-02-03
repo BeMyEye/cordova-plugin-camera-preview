@@ -17,6 +17,7 @@
 - (void) startCamera:(CDVInvokedUrlCommand*)command {
 
   CDVPluginResult *pluginResult;
+  self.startCameraInProgress = true;
 
   if (self.sessionManager != nil) {
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Camera already started!"];
@@ -74,7 +75,8 @@
     self.sessionManager.delegate = self.cameraRenderController;
 
     [self.sessionManager setupSession:defaultCamera completion:^(BOOL started) {
-
+      
+      self.startCameraInProgress = false;
       [self.commandDelegate sendPluginResult:[CDVPluginResult resultWithStatus:CDVCommandStatus_OK] callbackId:command.callbackId];
 
     }];
@@ -95,6 +97,12 @@
 
         self.cameraRenderController = nil;
         self.sessionManager = nil;
+      
+        if(self.startCameraInProgress == false) {
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"startCamera in progress"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            return;
+        }
 
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     }
@@ -456,6 +464,38 @@
     CGFloat width = (CGFloat)[command.arguments[0] floatValue];
     CGFloat height = (CGFloat)[command.arguments[1] floatValue];
     CGFloat quality = (CGFloat)[command.arguments[2] floatValue] / 100.0f;
+    
+    CGFloat latitude = (CGFloat)[command.arguments[3] floatValue];
+    CGFloat longitude = (CGFloat)[command.arguments[4] floatValue];
+    CGFloat altitude = (CGFloat)[command.arguments[5] floatValue];
+    NSTimeInterval timestamp = [command.arguments[6] doubleValue];
+    CGFloat trueHeading = (CGFloat)[command.arguments[7] floatValue];
+    CGFloat magneticHeading = (CGFloat)[command.arguments[8] floatValue];
+    NSString *software = command.arguments[9];
+      
+    self.exifInfos = [NSMutableDictionary new];
+      
+    if(latitude){
+      self.exifInfos[@"latitude"] = [NSNumber numberWithDouble:latitude];
+    }
+    if(longitude){
+      self.exifInfos[@"longitude"] = [NSNumber numberWithDouble:longitude];
+    }
+    if(altitude){
+      self.exifInfos[@"altitude"] = [NSNumber numberWithDouble:altitude];
+    }
+    if(timestamp){
+      self.exifInfos[@"timestamp"] = [NSNumber numberWithDouble:timestamp];
+    }
+    if(trueHeading){
+      self.exifInfos[@"trueHeading"] = [NSNumber numberWithDouble:trueHeading];
+    }
+    if(magneticHeading){
+      self.exifInfos[@"magneticHeading"] = [NSNumber numberWithDouble:magneticHeading];
+    }
+    if(software){
+      self.exifInfos[@"software"] = software;
+    }
 
     [self invokeTakePicture:width withHeight:height withQuality:quality];
   } else {
@@ -751,6 +791,13 @@
         if (self.storeToFile) {
           NSData *data = UIImageJPEGRepresentation([UIImage imageWithCGImage:resultFinalImage], (CGFloat) quality);
           NSString* filePath = [self getTempFilePath:@"jpg"];
+          
+          CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
+          NSDictionary *imageProperties = (__bridge_transfer NSDictionary *) CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL);
+          NSMutableDictionary *metadata = [NSMutableDictionary dictionaryWithDictionary:imageProperties];
+          metadata[(NSString *)kCGImageDestinationLossyCompressionQuality] = @(quality);
+          [self writeExifInfosToMetadata:metadata];
+          
           NSError *err;
 
           if (![data writeToFile:filePath options:NSAtomicWrite error:&err]) {
@@ -781,6 +828,80 @@
   }
   return [self.storageDirectory stringByStandardizingPath];
 }
+
+- (void)writeExifInfosToMetadata:(NSMutableDictionary *)metadata
+{
+    // TIFF
+    NSMutableDictionary *tiff =
+        [metadata[(NSString *)kCGImagePropertyTIFFDictionary] mutableCopy];
+
+    if (!tiff) {
+        tiff = [NSMutableDictionary dictionary];
+    }
+
+    tiff[(NSString *)kCGImagePropertyTIFFSoftware] = self.exifInfos[@"software"];
+    metadata[(NSString *)kCGImagePropertyTIFFDictionary] = tiff;
+
+    // GPS
+    NSMutableDictionary *gps = [NSMutableDictionary dictionary];
+    metadata[(NSString *)kCGImagePropertyGPSDictionary] = gps;
+
+    // Latitude / Longitude refs
+    NSString *latitudeRef = @"N";
+    NSString *longitudeRef = @"E";
+
+    NSNumber *latitude = self.exifInfos[@"latitude"];
+    if (latitude && [latitude doubleValue] < 0.0) {
+        latitudeRef = @"S";
+        self.exifInfos[@"latitude"] = @([latitude doubleValue] * -1.0);
+    }
+
+    NSNumber *longitude = self.exifInfos[@"longitude"];
+    if (longitude && [longitude doubleValue] < 0.0) {
+        longitudeRef = @"W";
+        self.exifInfos[@"longitude"] = @([longitude doubleValue] * -1.0);
+    }
+
+    // Heading
+    NSNumber *trueHeading = self.exifInfos[@"trueHeading"];
+    NSNumber *magneticHeading = self.exifInfos[@"magneticHeading"];
+
+    if (trueHeading || magneticHeading) {
+        if (!trueHeading || [trueHeading doubleValue] < 0.0) {
+            gps[(NSString *)kCGImagePropertyGPSImgDirection] =
+                @[ magneticHeading ?: @0, @1 ];
+            gps[(NSString *)kCGImagePropertyGPSImgDirectionRef] = @"M";
+        } else {
+            gps[(NSString *)kCGImagePropertyGPSImgDirection] =
+                @[ trueHeading, @1 ];
+            gps[(NSString *)kCGImagePropertyGPSImgDirectionRef] = @"T";
+        }
+    }
+
+    // Coordinates
+    gps[(NSString *)kCGImagePropertyGPSLatitudeRef] = latitudeRef;
+    gps[(NSString *)kCGImagePropertyGPSLongitudeRef] = longitudeRef;
+    gps[(NSString *)kCGImagePropertyGPSLatitude] = self.exifInfos[@"latitude"];
+    gps[(NSString *)kCGImagePropertyGPSLongitude] = self.exifInfos[@"longitude"];
+
+    // Timestamp
+    NSTimeInterval timestamp =
+        [self.exifInfos[@"timestamp"] doubleValue];
+
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+
+    self.dateFormatterForPhotoExif.dateFormat = @"HH:mm:ss";
+    gps[(NSString *)kCGImagePropertyGPSTimeStamp] =
+        [self.dateFormatterForPhotoExif stringFromDate:date];
+
+    self.dateFormatterForPhotoExif.dateFormat = @"yyyy:MM:dd";
+    gps[(NSString *)kCGImagePropertyGPSDateStamp] =
+        [self.dateFormatterForPhotoExif stringFromDate:date];
+
+    // Clear EXIF after usage
+    self.exifInfos = [NSMutableDictionary dictionary];
+}
+
 
 - (NSString*)getTempFilePath:(NSString*)extension
 {

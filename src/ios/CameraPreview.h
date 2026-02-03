@@ -46,6 +46,7 @@
 @property (nonatomic) CameraSessionManager *sessionManager;
 @property (nonatomic) CameraRenderController *cameraRenderController;
 @property (nonatomic) NSString *onPictureTakenHandlerId;
+@property (nonatomic) BOOL startCameraInProgress;
 @property (nonatomic) BOOL storeToFile;
 @property (nonatomic, copy) NSString *storageDirectory;
 
