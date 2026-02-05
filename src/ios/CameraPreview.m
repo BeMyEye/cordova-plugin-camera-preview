@@ -48,6 +48,7 @@
     self.cameraRenderController.dragEnabled = dragEnabled;
     self.cameraRenderController.tapToTakePicture = tapToTakePicture;
     self.cameraRenderController.tapToFocus = tapToFocus;
+    self.cameraRenderController.disableExifHeaderStripping = disableExifHeaderStripping;
     self.cameraRenderController.sessionManager = self.sessionManager;
     self.cameraRenderController.view.frame = CGRectMake(x, y, width, height);
     self.cameraRenderController.delegate = self;
@@ -61,15 +62,14 @@
       self.webView.opaque = NO;
       self.webView.backgroundColor = [UIColor clearColor];
 
-      self.webView.scrollView.opaque = NO;
-      self.webView.scrollView.backgroundColor = [UIColor clearColor];
-
-      [self.viewController.view insertSubview:self.cameraRenderController.view atIndex:0];
+      [self.webView.superview addSubview:self.cameraRenderController.view];
       [self.webView.superview bringSubviewToFront:self.webView];
     } else {
       self.cameraRenderController.view.alpha = alpha;
       [self.webView.superview insertSubview:self.cameraRenderController.view aboveSubview:self.webView];
     }
+      
+    [self.cameraRenderController didMoveToParentViewController:self.viewController];
 
     // Setup session
     self.sessionManager.delegate = self.cameraRenderController;
@@ -791,6 +791,8 @@
         if (self.storeToFile) {
           NSData *data = UIImageJPEGRepresentation([UIImage imageWithCGImage:resultFinalImage], (CGFloat) quality);
           NSString* filePath = [self getTempFilePath:@"jpg"];
+            
+            NSLog(@"filePath = %@", filePath);
           
           CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)data, NULL);
           NSDictionary *imageProperties = (__bridge_transfer NSDictionary *) CGImageSourceCopyPropertiesAtIndex(imageSource, 0, NULL);
@@ -804,7 +806,16 @@
             pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_IO_EXCEPTION messageAsString:[err localizedDescription]];
           }
           else {
-            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:[[NSURL fileURLWithPath:filePath] absoluteString]];
+          UIImage *image = [UIImage imageWithCGImage:resultFinalImage];
+          CGImageRef cgImage = image.CGImage;
+          NSMutableDictionary *resultMedia = [NSMutableDictionary dictionary];
+
+          resultMedia[@"filePath"] = [[NSURL fileURLWithPath:filePath] absoluteString];
+          resultMedia[@"width"] = @(CGImageGetWidth(cgImage));
+          resultMedia[@"height"] = @(CGImageGetHeight(cgImage));
+          resultMedia[@"orientation"] = metadata[(__bridge NSString *)kCGImagePropertyOrientation];
+              
+            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultMedia];
           }
         } else {
           NSMutableArray *params = [[NSMutableArray alloc] init];
@@ -823,10 +834,11 @@
 
 - (NSString*)getTempDirectoryPath
 {
-  if (self.storageDirectory == NULL) {
-    return [NSTemporaryDirectory()stringByStandardizingPath];
-  }
-  return [self.storageDirectory stringByStandardizingPath];
+    if (!self.storageDirectory || self.storageDirectory.length == 0) {
+        return [NSTemporaryDirectory() stringByStandardizingPath];
+    }
+
+    return [self.storageDirectory stringByStandardizingPath];
 }
 
 - (void)writeExifInfosToMetadata:(NSMutableDictionary *)metadata
@@ -915,6 +927,10 @@
         filePath = [NSString stringWithFormat:@"%@/%@%04d.%@", tmpPath, TMP_IMAGE_PREFIX, i++, extension];
     } while ([fileMgr fileExistsAtPath:filePath]);
 
+    if ([filePath hasPrefix:@"file:"]) {
+        filePath = [[NSURL URLWithString:filePath] path];
+    }
+    
     return filePath;
 }
 

@@ -46,7 +46,7 @@ CameraPreview.startCamera = function(options, onSuccess, onError) {
 
   options.storeToFile = options.storeToFile || false;
 
-  options.storageDirectory = options.storageDirectory || null;
+  options.storageDirectory = options.storageDirectory || "";
 
   exec(onSuccess, onError, PLUGIN_NAME, "startCamera", [
     options.x,

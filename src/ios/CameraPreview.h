@@ -49,5 +49,7 @@
 @property (nonatomic) BOOL startCameraInProgress;
 @property (nonatomic) BOOL storeToFile;
 @property (nonatomic, copy) NSString *storageDirectory;
+@property (nonatomic) NSMutableDictionary *exifInfos;
+@property (nonatomic) NSDateFormatter *dateFormatterForPhotoExif;
 
 @end
