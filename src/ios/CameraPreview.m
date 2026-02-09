@@ -834,11 +834,19 @@
 
 - (NSString*)getTempDirectoryPath
 {
+    NSString *path;
+
     if (!self.storageDirectory || self.storageDirectory.length == 0) {
-        return [NSTemporaryDirectory() stringByStandardizingPath];
+        path = NSTemporaryDirectory();
+    } else {
+        path = self.storageDirectory;
     }
 
-    return [self.storageDirectory stringByStandardizingPath];
+    if ([path hasPrefix:@"file:"]) {
+        path = [[NSURL URLWithString:path] path];
+    }
+
+    return [path stringByStandardizingPath];
 }
 
 - (void)writeExifInfosToMetadata:(NSMutableDictionary *)metadata
@@ -920,16 +928,14 @@
     NSString* tmpPath = [self getTempDirectoryPath];
     NSFileManager* fileMgr = [[NSFileManager alloc] init]; // recommended by Apple (vs [NSFileManager defaultManager]) to be threadsafe
     NSString* filePath;
+    
+    NSString* test = [NSString stringWithFormat:@"%@/%@%04d.%@", tmpPath, TMP_IMAGE_PREFIX, 1, extension];
 
     // generate unique file name
     int i = 1;
     do {
         filePath = [NSString stringWithFormat:@"%@/%@%04d.%@", tmpPath, TMP_IMAGE_PREFIX, i++, extension];
     } while ([fileMgr fileExistsAtPath:filePath]);
-
-    if ([filePath hasPrefix:@"file:"]) {
-        filePath = [[NSURL URLWithString:filePath] path];
-    }
     
     return filePath;
 }
