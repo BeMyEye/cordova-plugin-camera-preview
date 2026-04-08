@@ -926,16 +926,9 @@
 - (NSString*)getTempFilePath:(NSString*)extension
 {
     NSString* tmpPath = [self getTempDirectoryPath];
-    NSFileManager* fileMgr = [[NSFileManager alloc] init]; // recommended by Apple (vs [NSFileManager defaultManager]) to be threadsafe
-    NSString* filePath;
     
-    NSString* test = [NSString stringWithFormat:@"%@/%@%04d.%@", tmpPath, TMP_IMAGE_PREFIX, 1, extension];
-
-    // generate unique file name
-    int i = 1;
-    do {
-        filePath = [NSString stringWithFormat:@"%@/%@%04d.%@", tmpPath, TMP_IMAGE_PREFIX, i++, extension];
-    } while ([fileMgr fileExistsAtPath:filePath]);
+    NSString *uuid = [[NSUUID UUID] UUIDString];
+    NSString *filePath = [NSString stringWithFormat:@"%@/%@.%@", tmpPath, uuid, extension];
     
     return filePath;
 }
