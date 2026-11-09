@@ -331,33 +331,47 @@ public class CameraPreview extends CordovaPlugin implements CameraActivity.Camer
           cordova.getActivity().addContentView(containerView, containerLayoutParams);
         }
 
+        View view = webView.getView();
+
+        // The x/y received from JS are relative to the webview, but the camera is laid out in
+        // containerView. Both used to share the same origin; since cordova-android 15 the webview
+        // is inset natively (margins for the status/navigation bars) while containerView is not.
+        // Translate the position by the offset between the two.
+        int[] webViewLocation = new int[2];
+        int[] containerLocation = new int[2];
+        view.getLocationInWindow(webViewLocation);
+        containerView.getLocationInWindow(containerLocation);
+        fragment.setRect(
+          fragment.x + webViewLocation[0] - containerLocation[0],
+          fragment.y + webViewLocation[1] - containerLocation[1],
+          fragment.width,
+          fragment.height
+        );
+
         //display camera below the webview
         if(toBack){
-          View view = webView.getView();
           ViewParent rootParent = containerView.getParent();
-          ViewParent curParent = view.getParent();
 
           view.setBackgroundColor(0x00000000);
 
-          // If parents do not match look for.
-          if(curParent.getParent() != rootParent) {
-            while(curParent != null && curParent.getParent() != rootParent) {
-              curParent = curParent.getParent();
-            }
+          // Make every ancestor of the webview transparent up to the container's parent, not only the
+          // topmost one: other plugins (e.g. Google Maps) or cordova-android 15's rootLayout can wrap
+          // the webview in several layers, and any opaque one would hide the camera feed.
+          ViewParent curParent = view.getParent();
+          View topAncestor = null;
+          while(curParent instanceof ViewGroup && curParent != rootParent) {
+            ((ViewGroup)curParent).setBackgroundColor(0x00000000);
+            topAncestor = (View) curParent;
+            curParent = curParent.getParent();
+          }
 
-            if(curParent != null) {
-              ((ViewGroup)curParent).setBackgroundColor(0x00000000);
-              ((ViewGroup)curParent).bringToFront();
-            } else {
-              // Do default...
-              curParent = view.getParent();
-              webViewParent = curParent;
-              ((ViewGroup)view).bringToFront();
-            }
-          }else{
-            // Default
-            webViewParent = curParent;
-            rootParent.bringChildToFront(((View) webViewParent));
+          if(curParent == rootParent && topAncestor != null) {
+            webViewParent = (ViewParent) topAncestor;
+            ((ViewGroup)rootParent).bringChildToFront(topAncestor);
+          } else {
+            // Do default...
+            webViewParent = view.getParent();
+            view.bringToFront();
           }
 
         }else{
